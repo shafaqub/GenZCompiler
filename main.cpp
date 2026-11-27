@@ -143,26 +143,103 @@ int main()
             tok = readChar(code, pos, line, col);
         }
 
+
         // SH06: Identifies valid symbols and reports unsupported characters.
         else
         {
-            string validSymbols = "+-*/%<>=!():;,{}";
-
-            tok.lexeme = string(1, ch);
             tok.line = line;
             tok.column = col;
 
-            if (validSymbols.find(ch) != string::npos)
+            string twoChar = "";
+
+            if (pos + 1 < code.length())
+                twoChar = code.substr(pos, 2);
+
+            // Reject explicitly invalid operator combinations
+            if (twoChar == ":=" || twoChar == "<-")
             {
-                tok.type = "OTHER";
-            }
-            else
-            {
-                tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
+                tok.lexeme = twoChar;
+                tok.type = "NO CAP BESTIE! INVALID_OPERATOR";
+
+                pos += 2;
+                col += 2;
             }
 
-            pos++;
-            col++;
+            // Valid two-character operators (Maximal Munch)
+            else if (twoChar == "<=" || twoChar == ">=" ||
+                    twoChar == "==" || twoChar == "!=")
+            {
+                tok.lexeme = twoChar;
+
+                if (twoChar == "==" || twoChar == "!=")
+                    tok.type = "EQUALITY_OPERATOR";
+                else
+                    tok.type = "RELATIONAL_OPERATOR";
+
+                pos += 2;
+                col += 2;
+            }
+
+            // Single-character operators and delimiters
+            else
+            {
+                tok.lexeme = string(1, ch);
+
+                switch (ch)
+                {
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '/':
+                    case '%':
+                        tok.type = "ARITHMETIC_OPERATOR";
+                        break;
+
+                    case '<':
+                    case '>':
+                        tok.type = "RELATIONAL_OPERATOR";
+                        break;
+
+                    case '=':
+                        tok.type = "ASSIGNMENT_OPERATOR";
+                        break;
+
+                    case '!':
+                        tok.type = "INVALID_OPERATOR";
+                        break;
+
+                    case '(':
+                    case ')':
+                    case '{':
+                    case '}':
+                    case ';':
+                    case ':':
+                    case ',':
+                        tok.type = "DELIMITER";
+                        break;
+
+                    default:
+                        tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
+                        break;
+                }
+
+                pos++;
+                col++;
+            }
+        }
+
+        // SH29: Handles single-line comments beginning with lowkey.
+        if (tok.type == "KEYWORD" && tok.lexeme == "lowkey")
+        {
+            // Skips the comment marker and everything after it on this line.
+            while (pos < totalChar && code[pos] != '\n')
+            {
+                pos++;
+                col++;
+            }
+
+            // Do not add the comment marker to the token output.
+            continue;
         }
 
         // SH03: Retrieves the original source line for error reporting.
