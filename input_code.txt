@@ -1,0 +1,35 @@
+
+period maincharacter
+
+
+whole score = 25 @;
+whole marks = 50 #;
+
+
+whole VeryLongName = 10;
+whole verylongidentifiername123 = 20;
+
+whole first = 12.5.6;
+whole second = 123abc;
+decimal third = .5;
+decimal fourth = 12.;
+
+text message = "Hello;
+
+letter firstChar = '';
+letter secondChar = 'AB';
+letter thirdChar = 'A;
+letter fourthChar = '';
+
+whole age = 20;
+decimal height = 5.7;
+text name = "Shafaq";
+letter grade = 'A';
+
+period maincharacter
+
+whole score = 25 @;
+whole marks = 50 #;
+whole price = 100 $;
+whole result = 20 ?;
+whole age = 18;
