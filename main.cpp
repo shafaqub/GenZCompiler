@@ -6,6 +6,7 @@
 
 #include "lexer/lexer.h"
 #include "errors/error_handler.h"
+#include "lexer/delimeters_comments.h"
 
 using namespace std;
 
@@ -82,6 +83,13 @@ int main()
             continue;
         }
 
+        // F05: Skips single-line comments that starts with lowkey
+        if (isCommentStart (code, pos))
+        {
+            skipComment (code, pos, line, col);
+            continue;
+        }
+
         Token tok;
 
         // M04: Calls Merum's existing lexer functions for token recognition.
@@ -149,7 +157,14 @@ int main()
 
 
 
-        // S(Sana), SH(Shafaq): Recognizes operators and delimiters using DFA-inspired classification.
+        // F03-F04 (Famia): Recognizes individual delimiters and punctuation.
+        // The := operator is excluded and handled by Sana's S06 logic.
+        else if (isDelimiterAt(code, pos))
+        {
+            tok = readDelimiter(code, pos, line, col);
+        }
+
+        // S(Sana), SH(Shafaq): Recognizes operators using DFA-inspired classification.
         else
         {
             tok.line = line;
@@ -227,17 +242,6 @@ int main()
                         tok.type = "INVALID_OPERATOR";
                         break;
 
-                    // Existing delimiters
-                    case '(':
-                    case ')':
-                    case '{':
-                    case '}':
-                    case ';':
-                    case ':':
-                    case ',':
-                        tok.type = "DELIMITER";
-                        break;
-
                     // SH06: Reports unsupported characters
                     default:
                         tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
@@ -249,17 +253,7 @@ int main()
             }
         }
 
-        // SH07: Skips single-line comments starting with lowkey.
-        if (tok.type == "KEYWORD" && tok.lexeme == "lowkey")
-        {
-            while (pos < totalChar && code[pos] != '\n')
-            {
-                pos++;
-                col++;
-            }
-
-            continue;
-        }
+     
 
 
         // S07: Classifies logical operators recognized by the lexer.
