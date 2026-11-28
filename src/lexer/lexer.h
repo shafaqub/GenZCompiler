@@ -3,9 +3,13 @@
 #define LEXER_H
 
 #include <string>
+#include <vector>
 #include "token.h"
+#include "../errors/error_handler.h"
 
 using namespace std;
+
+vector<Token> runLexer(const string& filename, ErrorHandler& errorHandler);
 
 struct Symbol
 {
@@ -34,7 +38,7 @@ Token readNumber(string code, int &pos, int &line, int &col);
 Token readString(string code, int &pos, int &line, int &col);
 Token readChar(string code, int &pos, int &line, int &col);
 
-// Famia's delimiter and comment handling functions
+// Delimiter and comment handling functions
 bool isCommentStart(const string& code, int pos);
 void skipComment(const string& code, int &pos, int &line, int &col);
 bool isDelimiterAt(const string& code, int pos);
