@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "parser/parser.h"
 #include "lexer/lexer.h"
 #include "errors/error_handler.h"
 
@@ -303,6 +304,14 @@ int main()
     eofToken.column = col;
 
     tokenList.push_back(eofToken);
+
+    // =================================
+    // CONNECT LEXER WITH PARSER
+    // =================================
+
+    Parser parser(tokenList.data(), (int)tokenList.size());
+
+    cout << "\nLexer tokens successfully passed to parser.\n";
 
     outFile << eofToken.line << "\t\t"
             << eofToken.column << "\t\t"
