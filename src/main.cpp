@@ -6,10 +6,9 @@
 
 #include "lexer/lexer.h"
 #include "errors/error_handler.h"
-#include "lexer/delimeters_comments.h"
+
 
 using namespace std;
-
 
 int main()
 {
@@ -31,14 +30,12 @@ int main()
         return 1;
     }
 
-    // SH08: Creates the error handler to store and report lexical errors.
+    // SH08: Creates the error handler.
     ErrorHandler errorHandler;
 
     // SH30: Stores all generated tokens for the parser.
     vector<Token> tokenList;
 
-    // M01: Reads the complete source code into one string.
-    
     // SH03: Preserves individual source lines for error diagnostics.
     string code = "";
     string lineText;
@@ -83,16 +80,16 @@ int main()
             continue;
         }
 
-        // F05: Skips single-line comments that starts with lowkey
-        if (isCommentStart (code, pos))
+        // F05: Skips single-line comments starting with lowkey.
+        if (isCommentStart(code, pos))
         {
-            skipComment (code, pos, line, col);
+            skipComment(code, pos, line, col);
             continue;
         }
 
         Token tok;
 
-        // M04: Calls Merum's existing lexer functions for token recognition.
+        // M04: Calls Merum's existing lexer functions.
         if (ch >= 'a' && ch <= 'z')
         {
             tok = readIdentifierOrKeyword(code, pos, line, col);
@@ -101,7 +98,7 @@ int main()
         // SH04: Detects identifiers beginning with uppercase letters.
         else if (ch >= 'A' && ch <= 'Z')
         {
-            tok.type = "NO CAP BESTIE! INVALID_IDENTIFIER";
+            tok.type = TokenType::INVALID_IDENTIFIER;
 
             tok.line = line;
             tok.column = col;
@@ -141,7 +138,7 @@ int main()
             // A decimal must have digits before and after the dot.
             if (!tok.lexeme.empty() && tok.lexeme[0] == '.')
             {
-                tok.type = "NO CAP BESTIE! INVALID_NUMBER";
+                tok.type = TokenType::INVALID_NUMBER;
             }
         }
 
@@ -155,16 +152,14 @@ int main()
             tok = readChar(code, pos, line, col);
         }
 
-
-
-        // F03-F04 (Famia): Recognizes individual delimiters and punctuation.
+        // F03-F04: Recognizes individual delimiters and punctuation.
         // The := operator is excluded and handled by Sana's S06 logic.
         else if (isDelimiterAt(code, pos))
         {
             tok = readDelimiter(code, pos, line, col);
         }
 
-        // S(Sana), SH(Shafaq): Recognizes operators using DFA-inspired classification.
+        // S(Sana), SH(Shafaq): Recognizes operators.
         else
         {
             tok.line = line;
@@ -173,13 +168,15 @@ int main()
             string twoChar = "";
 
             if (pos + 1 < code.length())
+            {
                 twoChar = code.substr(pos, 2);
+            }
 
-            // S06: Recognizes the initialization operator :=
+            // S06: Recognizes initialization operator :=
             if (twoChar == ":=")
             {
                 tok.lexeme = twoChar;
-                tok.type = "INITIALIZATION_OPERATOR";
+                tok.type = TokenType::INITIALIZATION_OPERATOR;
 
                 pos += 2;
                 col += 2;
@@ -189,7 +186,7 @@ int main()
             else if (twoChar == "<-")
             {
                 tok.lexeme = twoChar;
-                tok.type = "NO CAP BESTIE! INVALID_OPERATOR";
+                tok.type = TokenType::INVALID_OPERATOR;
 
                 pos += 2;
                 col += 2;
@@ -202,9 +199,13 @@ int main()
                 tok.lexeme = twoChar;
 
                 if (twoChar == "==" || twoChar == "!=")
-                    tok.type = "EQUALITY_OPERATOR";
+                {
+                    tok.type = TokenType::EQUALITY_OPERATOR;
+                }
                 else
-                    tok.type = "RELATIONAL_OPERATOR";
+                {
+                    tok.type = TokenType::RELATIONAL_OPERATOR;
+                }
 
                 pos += 2;
                 col += 2;
@@ -217,34 +218,34 @@ int main()
 
                 switch (ch)
                 {
-                    // S01: Arithmetic operators
+                    // S01: Arithmetic operators.
                     case '+':
                     case '-':
                     case '*':
                     case '/':
                     case '%':
-                        tok.type = "ARITHMETIC_OPERATOR";
+                        tok.type = TokenType::ARITHMETIC_OPERATOR;
                         break;
 
-                    // S02: Relational operators
+                    // S02: Relational operators.
                     case '<':
                     case '>':
-                        tok.type = "RELATIONAL_OPERATOR";
+                        tok.type = TokenType::RELATIONAL_OPERATOR;
                         break;
 
-                    // S05: Assignment operator
+                    // S05: Assignment operator.
                     case '=':
-                        tok.type = "ASSIGNMENT_OPERATOR";
+                        tok.type = TokenType::ASSIGNMENT_OPERATOR;
                         break;
 
-                    // SH06: Standalone ! is not supported
+                    // SH06: Standalone ! is not supported.
                     case '!':
-                        tok.type = "INVALID_OPERATOR";
+                        tok.type = TokenType::INVALID_OPERATOR;
                         break;
 
-                    // SH06: Reports unsupported characters
+                    // SH06: Reports unsupported characters.
                     default:
-                        tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
+                        tok.type = TokenType::INVALID_CHARACTER;
                         break;
                 }
 
@@ -253,16 +254,13 @@ int main()
             }
         }
 
-     
-
-
         // S07: Classifies logical operators recognized by the lexer.
-        if (tok.type == "KEYWORD" &&
+        if (tok.type == TokenType::KEYWORD &&
             (tok.lexeme == "and" ||
              tok.lexeme == "or" ||
              tok.lexeme == "not"))
         {
-            tok.type = "LOGICAL_OPERATOR";
+            tok.type = TokenType::LOGICAL_OPERATOR;
         }
 
         // SH03: Retrieves the original source line for error reporting.
@@ -273,33 +271,33 @@ int main()
             sourceLine = sourceLines[tok.line - 1];
         }
 
-        // SH27: Passes the recognized token to the separate error handler.
+        // SH27: Passes the token type as a string to the error handler.
         errorHandler.checkToken(
-            tok.type,
+            tokenTypeToString(tok.type),
             tok.lexeme,
             sourceLine,
             tok.line,
             tok.column
         );
 
-        // SH30: Stores the token in the token list for future parsing.
+        // SH30: Stores the token for future parsing.
         tokenList.push_back(tok);
-
 
         // M05: Writes the recognized token to the output file.
         outFile << tok.line << "\t\t"
                 << tok.column << "\t\t"
-                << tok.type << "\t\t"
+                << tokenTypeToString(tok.type) << "\t\t"
                 << tok.lexeme << "\n";
 
         // M05: Displays the recognized token on the console.
         cout << "[" << tok.line << ":" << tok.column << "] "
-             << tok.type << " -> " << tok.lexeme << "\n";
+             << tokenTypeToString(tok.type) << " -> "
+             << tok.lexeme << "\n";
     }
 
     // SH30: Adds EOF to mark the end of the token stream.
     Token eofToken;
-    eofToken.type = "EOF";
+    eofToken.type = TokenType::END_OF_FILE;
     eofToken.lexeme = "$";
     eofToken.line = line;
     eofToken.column = col;
@@ -308,13 +306,13 @@ int main()
 
     outFile << eofToken.line << "\t\t"
             << eofToken.column << "\t\t"
-            << eofToken.type << "\t\t"
+            << tokenTypeToString(eofToken.type) << "\t\t"
             << eofToken.lexeme << "\n";
 
     cout << "[" << eofToken.line << ":" << eofToken.column << "] "
-        << eofToken.type << " -> " << eofToken.lexeme << "\n";
+         << tokenTypeToString(eofToken.type) << " -> "
+         << eofToken.lexeme << "\n";
 
-    
     outFile.close();
 
     // M06: Saves the symbol table generated by Merum's lexer.

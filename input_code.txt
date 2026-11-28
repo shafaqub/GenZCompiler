@@ -1,35 +1,83 @@
 
 period maincharacter
+{
+    whole colonTest = 5;
+    : 
+    whole score = 25;
+    whole marks = 50;
+    decimal height = 5.7;
+    text name = "Shafaq";
+    letter grade = 'A';
 
+    whole lowkeyvalue = 10;
+    whole xlowkey = 20;
 
-whole score = 25 @;
-whole marks = 50 #;
+    whole age = 20;
+    whole price = 100;
+    decimal average = 12.5;
+    decimal temperature = 0.75;
 
+    text greeting = "Hello World";
+    text message = "AERIS Compiler";
+    letter firstChar = 'A';
+    letter secondChar = 'Z';
 
-whole VeryLongName = 10;
-whole verylongidentifiername123 = 20;
+    whole addition = score + marks;
+    whole subtraction = marks - score;
+    whole multiplication = score * marks;
+    whole division = marks / score;
+    whole remainder = marks % score;
 
-whole first = 12.5.6;
-whole second = 123abc;
-decimal third = .5;
-decimal fourth = 12.;
+    whole result1 = score < marks;
+    whole result2 = score > marks;
+    whole result3 = score <= marks;
+    whole result4 = score >= marks;
 
-text message = "Hello;
+    whole result5 = score == marks;
+    whole result6 = score != marks;
 
-letter firstChar = '';
-letter secondChar = 'AB';
-letter thirdChar = 'A;
-letter fourthChar = '';
+    whole result7 = score and marks;
+    whole result8 = score or marks;
+    whole result9 = not score;
 
-whole age = 20;
-decimal height = 5.7;
-text name = "Shafaq";
-letter grade = 'A';
+    whole x = 10;
+    whole y := 20;
 
-period maincharacter
+    whole numbers = (10);
+    {
+        whole first = 1;
+        whole second = 2;
+    }
 
-whole score = 25 @;
-whole marks = 50 #;
-whole price = 100 $;
-whole result = 20 ?;
-whole age = 18;
+    whole values = 10, 20, 30;
+    whole colonTest = 5;
+
+    lowkey This entire line should be ignored.
+
+    whole afterComment = 100;
+    whole lowkeyfoo = 200;
+    whole xlowkey = 300;
+
+    whole invalidOne = 100 @;
+    whole invalidTwo = 200 #;
+    whole invalidThree = 300 $;
+    whole invalidFour = 400 ?;
+
+    whole VeryLongName = 10;
+    whole verylongidentifiername123 = 20;
+
+    whole invalidNumber1 = 12.5.6;
+    whole invalidNumber2 = 123abc;
+    decimal invalidNumber3 = .5;
+    decimal invalidNumber4 = 12.;
+
+    text unclosedString = "Hello;
+
+    letter invalidChar1 = '';
+    letter invalidChar2 = 'AB';
+    letter invalidChar3 = 'A;
+
+    whole invalidOperator1 := 100;
+    whole invalidOperator2 <- 200;
+    whole invalidOperator3 = !;
+}

@@ -123,25 +123,25 @@ Token readIdentifierOrKeyword(string code, int &pos, int &line, int &col) {
 
     // 1. Check boolean literals first
     if (word == "true" || word == "false") {
-        tok.type = "BOOLEAN_LITERAL";
+        tok.type = TokenType::BOOLEAN_LITERAL;
         return tok;
     }
 
     // 2. Check if the word is a reserved keyword in AERIS
     if (isKeyword(word)) {
-        tok.type = "KEYWORD";
+        tok.type = TokenType::KEYWORD;
         return tok;
     }
 
     // 3. Check identifier length rule (maximum 20 characters -> L002)
     if ((int)word.length() > MAX_IDENT_LENGTH) {
-        tok.type = "NO CAP BESTIE! INVALID_IDENTIFIER";
+        tok.type = TokenType::INVALID_IDENTIFIER;
         return tok;
     }
 
     // 4. Otherwise it is a valid identifier: add to symbol table and return token
     addOrFindSymbol(word);
-    tok.type = "IDENTIFIER";
+    tok.type = TokenType::IDENTIFIER;
     return tok;
 }
 
@@ -192,11 +192,11 @@ Token readNumber(string code, int &pos, int &line, int &col) {
     t.column = startCol;
 
     if (malformed) {
-        t.type = "NO CAP BESTIE! INVALID_NUMBER";
+        t.type = TokenType::INVALID_NUMBER;
     } else if (dotCount == 1) {
-        t.type = "DECIMAL_LITERAL";
+        t.type = TokenType::DECIMAL_LITERAL;
     } else {
-        t.type = "WHOLE_LITERAL";
+        t.type = TokenType::WHOLE_LITERAL;
     }
 
     return t;
@@ -218,7 +218,7 @@ Token readString(string code, int &pos, int &line, int &col) {
         // If line ends before closing ", report ERROR
         if (ch == '\n') {
             Token t;
-            t.type = "NO CAP BESTIE!_UNCLOSED_STRING";
+            t.type = TokenType::UNCLOSED_STRING;
             t.lexeme = text;
             t.line = startLine;
             t.column = startCol;
@@ -231,7 +231,7 @@ Token readString(string code, int &pos, int &line, int &col) {
             col++;
 
             Token t;
-            t.type = "STRING_LITERAL";
+            t.type = TokenType::STRING_LITERAL;
             t.lexeme = text;
             t.line = startLine;
             t.column = startCol;
@@ -244,7 +244,7 @@ Token readString(string code, int &pos, int &line, int &col) {
             col++;
             if (pos >= (int)code.length() || code[pos] == '\n') {
                 Token t;
-                t.type = "NO CAP BESTIE!_UNCLOSED_STRING";
+                t.type = TokenType::UNCLOSED_STRING;
                 t.lexeme = text;
                 t.line = startLine;
                 t.column = startCol;
@@ -263,7 +263,7 @@ Token readString(string code, int &pos, int &line, int &col) {
 
     // Reached end of file without closing "
     Token t;
-    t.type = "NO CAP BESTIE!_UNCLOSED_STRING";
+    t.type = TokenType::UNCLOSED_STRING;
     t.lexeme = text;
     t.line = startLine;
     t.column = startCol;
@@ -287,7 +287,7 @@ Token readChar(string code, int &pos, int &line, int &col) {
         col++;
 
         Token t;
-        t.type = "NO CAP BESTIE!_INVALID_CHAR_LITERAL";
+        t.type = TokenType::INVALID_CHAR_LITERAL;
         t.lexeme = shown;
         t.line = startLine;
         t.column = startCol;
@@ -297,7 +297,7 @@ Token readChar(string code, int &pos, int &line, int &col) {
     // Missing character before newline or end of file
     if (pos >= (int)code.length() || code[pos] == '\n') {
         Token t;
-        t.type = "NO CAP BESTIE!_INVALID_CHAR_LITERAL";
+        t.type = TokenType::INVALID_CHAR_LITERAL;
         t.lexeme = shown;
         t.line = startLine;
         t.column = startCol;
@@ -315,7 +315,7 @@ Token readChar(string code, int &pos, int &line, int &col) {
 
         if (pos >= (int)code.length() || code[pos] == '\n') {
             Token t;
-            t.type = "NO CAP BESTIE!_INVALID_CHAR_LITERAL";
+            t.type = TokenType::INVALID_CHAR_LITERAL;
             t.lexeme = shown;
             t.line = startLine;
             t.column = startCol;
@@ -341,7 +341,7 @@ Token readChar(string code, int &pos, int &line, int &col) {
         col++;
 
         Token t;
-        t.type = "CHARACTER_LITERAL";
+        t.type = TokenType::CHARACTER_LITERAL;
         t.lexeme = inside;
         t.line = startLine;
         t.column = startCol;
@@ -362,9 +362,108 @@ Token readChar(string code, int &pos, int &line, int &col) {
     }
 
     Token t;
-    t.type = "NO CAP BESTIE!_INVALID_CHAR_LITERAL";
+    t.type = TokenType::INVALID_CHAR_LITERAL;
     t.lexeme = shown;
     t.line = startLine;
     t.column = startCol;
     return t;
+}
+
+// Famia's delimiter and comment handling
+
+// Helper: checks letters, digits and underscore.
+static bool isWordCharacter(char ch)
+{
+    return (ch >= 'a' && ch <= 'z') ||
+           (ch >= 'A' && ch <= 'Z') ||
+           (ch >= '0' && ch <= '9') ||
+           ch == '_';
+}
+
+// F01: Checks whether a complete "lowkey" comment marker starts here.
+bool isCommentStart(const string& code, int pos)
+{
+    const string marker = "lowkey";
+    int totalChars = (int)code.length();
+    int markerLength = (int)marker.length();
+
+    if (pos < 0 || pos + markerLength > totalChars)
+        return false;
+
+    if (code.compare(pos, markerLength, marker) != 0)
+        return false;
+
+    if (pos > 0 && isWordCharacter(code[pos - 1]))
+        return false;
+
+    int next = pos + markerLength;
+
+    if (next < totalChars && isWordCharacter(code[next]))
+        return false;
+
+    return true;
+}
+
+// F02: Skips a comment until the newline.
+void skipComment(const string& code, int &pos, int &line, int &col)
+{
+    int totalChars = (int)code.length();
+
+    while (pos < totalChars && code[pos] != '\n')
+    {
+        pos++;
+        col++;
+    }
+}
+
+// F03: Checks whether the current character is a delimiter.
+bool isDelimiterAt(const string& code, int pos)
+{
+    if (pos < 0 || pos >= (int)code.length())
+        return false;
+
+    char ch = code[pos];
+
+    if (ch == '(' || ch == ')' ||
+        ch == '{' || ch == '}' ||
+        ch == ';' || ch == ',')
+    {
+        return true;
+    }
+
+    if (ch == ':')
+    {
+        // Keep := available for initialization-operator recognition.
+        if (pos + 1 < (int)code.length() && code[pos + 1] == '=')
+            return false;
+
+        return true;
+    }
+
+    return false;
+}
+
+// F04: Reads one delimiter and returns its token.
+Token readDelimiter(const string& code, int &pos, int &line, int &col)
+{
+    char ch = code[pos];
+
+    Token tok;
+    tok.lexeme = string(1, ch);
+    tok.line = line;
+    tok.column = col;
+
+    if (ch == '(')      tok.type = TokenType::LPAREN;
+    else if (ch == ')') tok.type = TokenType::RPAREN;
+    else if (ch == '{') tok.type = TokenType::LBRACE;
+    else if (ch == '}') tok.type = TokenType::RBRACE;
+    else if (ch == ';') tok.type = TokenType::SEMICOLON;
+    else if (ch == ':') tok.type = TokenType::COLON;
+    else if (ch == ',') tok.type = TokenType::COMMA;
+    else                tok.type = TokenType::INVALID_CHARACTER;
+
+    pos++;
+    col++;
+
+    return tok;
 }

@@ -4,7 +4,6 @@
 #include <fstream>
 
 using namespace std;
-
 #define RED "\033[31m"
 #define RESET "\033[0m"
 
@@ -94,7 +93,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     int caretLength = 1;
 
     // L001: Invalid Character.
-    if (tokenType == "NO CAP BESTIE! INVALID_CHARACTER")
+    if (tokenType == "INVALID_CHARACTER")
     {
         addError(
             "L001",
@@ -110,7 +109,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     }
 
     // L002: Invalid Identifier.
-    else if (tokenType == "NO CAP BESTIE! INVALID_IDENTIFIER")
+    else if (tokenType == "INVALID_IDENTIFIER")
     {
         int errorOffset = 0;
 
@@ -142,7 +141,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     }
 
     // L003: Malformed Number.
-    else if (tokenType == "NO CAP BESTIE! INVALID_NUMBER")
+    else if (tokenType == "INVALID_NUMBER")
     {
         int errorOffset = getNumberErrorOffset(lexeme);
 
@@ -162,7 +161,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     }
 
     // L004: Unclosed String.
-    else if (tokenType == "NO CAP BESTIE!_UNCLOSED_STRING")
+    else if (tokenType == "UNCLOSED_STRING")
     {
         // The error is reported at the opening quotation mark.
         addError(
@@ -179,7 +178,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     }
 
     // L005: Invalid Character Literal.
-    else if (tokenType == "NO CAP BESTIE!_INVALID_CHAR_LITERAL")
+    else if (tokenType == "INVALID_CHAR_LITERAL")
     {
         int errorOffset = getCharErrorOffset(lexeme);
 
@@ -199,8 +198,7 @@ void ErrorHandler::checkToken(const string& tokenType,
     }
 
     // L006: Invalid Operator.
-    else if (tokenType == "NO CAP BESTIE! INVALID_OPERATOR" ||
-            tokenType == "INVALID_OPERATOR")
+    else if (tokenType == "INVALID_OPERATOR")
     {
         addError(
             "L006",
