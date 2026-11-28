@@ -6,6 +6,7 @@
 
 #include "lexer/lexer.h"
 #include "errors/error_handler.h"
+#include "lexer/delimeters_comments.h"
 
 using namespace std;
 
@@ -78,6 +79,13 @@ int main()
             continue;
         }
 
+        // F05: Skips single-line comments that starts with lowkey
+        if (isCommentStart (code, pos))
+        {
+            skipComment (code, pos, line, col);
+            continue;
+        }
+
         Token tok;
 
         // M04: Calls Merum's existing lexer functions for token recognition.
@@ -143,6 +151,12 @@ int main()
             tok = readChar(code, pos, line, col);
         }
 
+
+        // F06: recoginizes delimeters and punctuations () {} : ; , 
+        else if (isDelimiterAt (code, pos))
+        {
+            tok =readDelimiter (code, pos, line, col);
+        }
         // SH06: Identifies valid symbols and reports unsupported characters.
         else
         {
