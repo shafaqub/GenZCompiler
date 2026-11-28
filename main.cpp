@@ -34,7 +34,11 @@ int main()
     // SH08: Creates the error handler to store and report lexical errors.
     ErrorHandler errorHandler;
 
+    // SH30: Stores all generated tokens for the parser.
+    vector<Token> tokenList;
+
     // M01: Reads the complete source code into one string.
+    
     // SH03: Preserves individual source lines for error diagnostics.
     string code = "";
     string lineText;
@@ -152,31 +156,113 @@ int main()
         }
 
 
-        // F06: recoginizes delimeters and punctuations () {} : ; , 
-        else if (isDelimiterAt (code, pos))
+
+        // F03-F04 (Famia): Recognizes individual delimiters and punctuation.
+        // The := operator is excluded and handled by Sana's S06 logic.
+        else if (isDelimiterAt(code, pos))
         {
-            tok =readDelimiter (code, pos, line, col);
+            tok = readDelimiter(code, pos, line, col);
         }
-        // SH06: Identifies valid symbols and reports unsupported characters.
+
+        // S(Sana), SH(Shafaq): Recognizes operators using DFA-inspired classification.
         else
         {
-            string validSymbols = "+-*/%<>=!():;,{}";
-
-            tok.lexeme = string(1, ch);
             tok.line = line;
             tok.column = col;
 
-            if (validSymbols.find(ch) != string::npos)
+            string twoChar = "";
+
+            if (pos + 1 < code.length())
+                twoChar = code.substr(pos, 2);
+
+            // S06: Recognizes the initialization operator :=
+            if (twoChar == ":=")
             {
-                tok.type = "OTHER";
-            }
-            else
-            {
-                tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
+                tok.lexeme = twoChar;
+                tok.type = "INITIALIZATION_OPERATOR";
+
+                pos += 2;
+                col += 2;
             }
 
-            pos++;
-            col++;
+            // SH06: Rejects unsupported operator combination <-
+            else if (twoChar == "<-")
+            {
+                tok.lexeme = twoChar;
+                tok.type = "NO CAP BESTIE! INVALID_OPERATOR";
+
+                pos += 2;
+                col += 2;
+            }
+
+            // S02-S04: Recognizes two-character relational and equality operators.
+            else if (twoChar == "<=" || twoChar == ">=" ||
+                     twoChar == "==" || twoChar == "!=")
+            {
+                tok.lexeme = twoChar;
+
+                if (twoChar == "==" || twoChar == "!=")
+                    tok.type = "EQUALITY_OPERATOR";
+                else
+                    tok.type = "RELATIONAL_OPERATOR";
+
+                pos += 2;
+                col += 2;
+            }
+
+            // S01, S02, S05: Recognizes single-character operators.
+            else
+            {
+                tok.lexeme = string(1, ch);
+
+                switch (ch)
+                {
+                    // S01: Arithmetic operators
+                    case '+':
+                    case '-':
+                    case '*':
+                    case '/':
+                    case '%':
+                        tok.type = "ARITHMETIC_OPERATOR";
+                        break;
+
+                    // S02: Relational operators
+                    case '<':
+                    case '>':
+                        tok.type = "RELATIONAL_OPERATOR";
+                        break;
+
+                    // S05: Assignment operator
+                    case '=':
+                        tok.type = "ASSIGNMENT_OPERATOR";
+                        break;
+
+                    // SH06: Standalone ! is not supported
+                    case '!':
+                        tok.type = "INVALID_OPERATOR";
+                        break;
+
+                    // SH06: Reports unsupported characters
+                    default:
+                        tok.type = "NO CAP BESTIE! INVALID_CHARACTER";
+                        break;
+                }
+
+                pos++;
+                col++;
+            }
+        }
+
+     
+
+
+        // S07: Classifies logical operators recognized by the lexer.
+        if (tok.type == "KEYWORD" &&
+            (tok.lexeme == "and" ||
+             tok.lexeme == "or" ||
+             tok.lexeme == "not"))
+        {
+            tok.type = "LOGICAL_OPERATOR";
         }
 
         // SH03: Retrieves the original source line for error reporting.
@@ -196,6 +282,10 @@ int main()
             tok.column
         );
 
+        // SH30: Stores the token in the token list for future parsing.
+        tokenList.push_back(tok);
+
+
         // M05: Writes the recognized token to the output file.
         outFile << tok.line << "\t\t"
                 << tok.column << "\t\t"
@@ -207,6 +297,24 @@ int main()
              << tok.type << " -> " << tok.lexeme << "\n";
     }
 
+    // SH30: Adds EOF to mark the end of the token stream.
+    Token eofToken;
+    eofToken.type = "EOF";
+    eofToken.lexeme = "$";
+    eofToken.line = line;
+    eofToken.column = col;
+
+    tokenList.push_back(eofToken);
+
+    outFile << eofToken.line << "\t\t"
+            << eofToken.column << "\t\t"
+            << eofToken.type << "\t\t"
+            << eofToken.lexeme << "\n";
+
+    cout << "[" << eofToken.line << ":" << eofToken.column << "] "
+        << eofToken.type << " -> " << eofToken.lexeme << "\n";
+
+    
     outFile.close();
 
     // M06: Saves the symbol table generated by Merum's lexer.

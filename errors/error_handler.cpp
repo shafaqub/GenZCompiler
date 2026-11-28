@@ -197,6 +197,23 @@ void ErrorHandler::checkToken(const string& tokenType,
             caretLength
         );
     }
+
+    // L006: Invalid Operator.
+    else if (tokenType == "NO CAP BESTIE! INVALID_OPERATOR" ||
+            tokenType == "INVALID_OPERATOR")
+    {
+        addError(
+            "L006",
+            "Invalid Operator",
+            lexeme,
+            "invalid operator '" + lexeme + "'",
+            sourceLine,
+            line,
+            column,
+            column,
+            (int)lexeme.length()
+        );
+    }
 }
 
 
